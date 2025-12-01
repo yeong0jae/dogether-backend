@@ -9,9 +9,14 @@ import site.dogether.member.exception.MemberNotFoundException;
 import site.dogether.member.repository.MemberRepository;
 import site.dogether.notification.entity.NotificationToken;
 import site.dogether.notification.exception.InvalidNotificationTokenException;
+import site.dogether.notification.sender.firebase.FcmNotificationSender;
+import site.dogether.notification.sender.firebase.MulticastFcmNotificationRequest;
 import site.dogether.notification.sender.firebase.SimpleFcmNotificationRequest;
 import site.dogether.notification.repository.NotificationTokenRepository;
 import site.dogether.notification.sender.NotificationSender;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Transactional(readOnly = true)
@@ -19,8 +24,11 @@ import site.dogether.notification.sender.NotificationSender;
 @Service
 public class NotificationService {
 
+    private static final int FCM_MULTICAST_LIMIT = 500;
+
     private final NotificationTokenRepository notificationTokenRepository;
     private final NotificationSender notificationSender;
+    private final FcmNotificationSender fcmNotificationSender;
     private final MemberRepository memberRepository;
 
     @Transactional
@@ -34,9 +42,15 @@ public class NotificationService {
             notificationToken -> sendNotification(notificationToken, title, body, type));
     }
 
-    private void sendNotification(final NotificationToken notificationToken, String title, String body, String type) {
+    private void sendNotification(
+            final NotificationToken notificationToken,
+            final String title,
+            final String body,
+            final String type
+    ) {
         try {
-            final SimpleFcmNotificationRequest simpleFcmNotificationRequest = new SimpleFcmNotificationRequest(notificationToken.getValue(), title, body, type);
+            final SimpleFcmNotificationRequest simpleFcmNotificationRequest =
+                    new SimpleFcmNotificationRequest(notificationToken.getValue(), title, body, type);
             notificationSender.send(simpleFcmNotificationRequest);
         } catch (final InvalidNotificationTokenException e) {
             notificationTokenRepository.deleteAllByValue(notificationToken.getValue());
@@ -80,5 +94,40 @@ public class NotificationService {
                 .ifPresent(notificationTokenJpaEntity -> {
                     notificationTokenRepository.delete(notificationTokenJpaEntity);
                     log.info("푸시 알림 토큰 제거 - {}", notificationToken);});
+    }
+
+    @Transactional
+    public void sendBatchNotification(
+        final List<Long> memberIds,
+        final String title,
+        final String body,
+        final String type
+    ) {
+        if (memberIds.isEmpty()) {
+            log.info("알림을 전송할 회원이 없습니다.");
+            return;
+        }
+
+        final List<String> allTokens = notificationTokenRepository.findTokenValuesByMemberIds(memberIds);
+
+        final List<String> allInvalidTokens = new ArrayList<>();
+        for (int i = 0; i < allTokens.size(); i += FCM_MULTICAST_LIMIT) {
+            final int endIndex = Math.min(i + FCM_MULTICAST_LIMIT, allTokens.size());
+            final List<String> tokenChunk = allTokens.subList(i, endIndex);
+
+            final MulticastFcmNotificationRequest request = new MulticastFcmNotificationRequest(
+                tokenChunk, title, body, type
+            );
+
+            final List<String> invalidTokens = fcmNotificationSender.sendMulticast(request);
+            allInvalidTokens.addAll(invalidTokens);
+        }
+
+        if (!allInvalidTokens.isEmpty()) {
+            allInvalidTokens.forEach(notificationTokenRepository::deleteAllByValue);
+            log.info("[배치 알림] 유효하지 않은 토큰 {}개 제거 완료", allInvalidTokens.size());
+        }
+
+        log.info("[배치 알림] 전송 완료 - 성공: {}개, 실패: {}개", allTokens.size() - allInvalidTokens.size(), allInvalidTokens.size());
     }
 }

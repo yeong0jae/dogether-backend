@@ -6,10 +6,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import site.dogether.notification.batch.NotificationBatchService;
 
-/**
- * 투두 미작성자 알림 스케줄러
- * - 매일 오전 9시에 오늘 투두를 작성하지 않은 회원에게 알림 발송
- */
 @Slf4j
 @RequiredArgsConstructor
 @Component
