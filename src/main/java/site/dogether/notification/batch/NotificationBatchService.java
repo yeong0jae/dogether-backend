@@ -39,11 +39,13 @@ public class NotificationBatchService {
                 .map(Member::getId)
                 .toList();
 
-        notificationService.sendBatchNotification(
-                memberIds,
-                "투두 작성 알림",
-                "오늘의 투두를 작성하지 않으셨네요! 지금 바로 작성해보세요!",
-                "REMINDER"
-        );
+        if (!memberIds.isEmpty()) {
+            notificationService.sendBatchNotification(
+                    memberIds,
+                    "투두 작성 알림",
+                    "오늘의 투두를 작성하지 않으셨네요! 지금 바로 작성해보세요!",
+                    "REMINDER"
+            );
+        }
     }
 }
