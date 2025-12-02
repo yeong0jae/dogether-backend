@@ -38,6 +38,7 @@ public class NotificationBatchService {
         final List<Long> memberIds = membersWhoDidNotWriteTodoToday.stream()
                 .map(Member::getId)
                 .toList();
+        log.info("투두 미작성자 조회 완료 - 총 {}명", memberIds.size());
 
         if (!memberIds.isEmpty()) {
             notificationService.sendBatchNotification(

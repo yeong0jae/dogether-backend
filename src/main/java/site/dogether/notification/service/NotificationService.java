@@ -103,11 +103,6 @@ public class NotificationService {
         final String body,
         final String type
     ) {
-        if (memberIds.isEmpty()) {
-            log.info("알림을 전송할 회원이 없습니다.");
-            return;
-        }
-
         final List<String> allTokens = notificationTokenRepository.findTokenValuesByMemberIds(memberIds);
 
         final List<String> allInvalidTokens = new ArrayList<>();
