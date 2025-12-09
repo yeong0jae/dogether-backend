@@ -8,6 +8,11 @@ spring:
   jpa:
     hibernate.ddl-auto: update
 
+  data:
+    redis:
+      host: localhost
+      port: 36379
+
 logging:
   config: classpath:logback/logback-local.xml
   level:
