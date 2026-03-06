@@ -25,6 +25,7 @@ import site.dogether.member.repository.MemberRepository;
 import site.dogether.memberactivity.entity.DailyTodoStats;
 import site.dogether.memberactivity.exception.DailyTodoStatsNotFoundException;
 import site.dogether.memberactivity.repository.DailyTodoStatsRepository;
+import site.dogether.notification.service.NotificationOutboxService;
 import site.dogether.notification.service.NotificationService;
 
 import java.util.List;
@@ -43,6 +44,7 @@ public class DailyTodoCertificationService {
     private final DailyTodoCertificationReviewerRepository dailyTodoCertificationReviewerRepository;
     private final ReviewerPicker reviewerPicker;
     private final DailyTodoHistoryService dailyTodoHistoryService;
+    private final NotificationOutboxService notificationOutboxService;
     private final NotificationService notificationService;
     private final ChallengeGroupPolicy challengeGroupPolicy;
 
@@ -65,24 +67,12 @@ public class DailyTodoCertificationService {
         final Optional<Member> reviewer = pickDailyTodoCertificationReviewer(challengeGroup, writer, dailyTodoCertification);
         dailyTodoHistoryService.updateDailyTodoHistory(dailyTodo);
 
-        reviewer.ifPresent(target -> sendNotificationToReviewer(target, writer, dailyTodo));
-    }
-
-    private void sendNotificationToReviewer(
-            final Member reviewer,
-            final Member writer,
-            final DailyTodo dailyTodo
-    ) {
-        if (reviewer == null) {
-            return;
-        }
-
-        notificationService.sendNotification(
-                reviewer.getId(),
+        reviewer.ifPresent(target -> notificationOutboxService.save(
+                target.getId(),
                 String.format("%s님의 투두 인증 검사자로 선정되었습니다.", writer.getName()),
-                String.format("투두 내용 : %s",dailyTodo.getContent()),
+                String.format("투두 내용 : %s", dailyTodo.getContent()),
                 "CERTIFICATION"
-        );
+        ));
     }
 
     private Member getMember(final Long memberId) {
@@ -143,7 +133,12 @@ public class DailyTodoCertificationService {
         dailyTodoStats.moveCertificatedToResult(reviewResult);
         dailyTodoHistoryService.updateDailyTodoHistory(dailyTodoCertification.getDailyTodo());
 
-        sendReviewResultNotificationToDailyTodoWriter(dailyTodoCertification.getDailyTodoWriterId(), dailyTodoCertification.getDailyTodoContent(), reviewResult);
+        notificationService.sendNotification(
+            dailyTodoCertification.getDailyTodoWriterId(),
+            "투두 수행 인증 검사 결과가 도착했어요! 🫣",
+            String.format("투두 내용 : %s\n검사 결과 : %s", dailyTodoCertification.getDailyTodoContent(), reviewResult.getDescription()),
+            "REVIEW"
+        );
     }
 
     private DailyTodoCertification getDailyTodoCertification(final Long dailyTodoCertificationId) {
@@ -155,19 +150,6 @@ public class DailyTodoCertificationService {
         if (!dailyTodoCertificationReviewerRepository.existsByDailyTodoCertificationAndReviewer(dailyTodoCertification, reviewer)) {
             throw new NotDailyTodoCertificationReviewerException(String.format("해당 투두 인증 검사자 외 멤버는 검사를 수행할 수 없습니다. (%s) (%s)", dailyTodoCertification, reviewer));
         }
-    }
-
-    private void sendReviewResultNotificationToDailyTodoWriter(
-        final Long dailyTodoWriterId,
-        final String dailyTodoContent,
-        final DailyTodoCertificationReviewStatus dailyTodoCertificationReviewResult
-    ) {
-        notificationService.sendNotification(
-            dailyTodoWriterId,
-            "투두 수행 인증 검사 결과가 도착했어요! 🫣",
-            String.format("투두 내용 : %s\n검사 결과 : %s", dailyTodoContent, dailyTodoCertificationReviewResult.getDescription()),
-            "REVIEW"
-        );
     }
 
     public List<DailyTodoCertificationDto> findAllTodoCertificationsToReviewer(final Long reviewerId) {
