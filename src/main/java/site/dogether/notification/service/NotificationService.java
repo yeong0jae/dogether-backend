@@ -2,6 +2,7 @@ package site.dogether.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.dogether.member.entity.Member;
@@ -23,6 +24,7 @@ public class NotificationService {
     private final NotificationSender notificationSender;
     private final MemberRepository memberRepository;
 
+    @Async("notificationExecutor")
     @Transactional
     public void sendNotification(
         final Long recipientId,

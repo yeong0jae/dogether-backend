@@ -68,6 +68,23 @@ public class DailyTodoCertificationService {
         reviewer.ifPresent(target -> sendNotificationToReviewer(target, writer, dailyTodo));
     }
 
+    private void sendNotificationToReviewer(
+            final Member reviewer,
+            final Member writer,
+            final DailyTodo dailyTodo
+    ) {
+        if (reviewer == null) {
+            return;
+        }
+
+        notificationService.sendNotification(
+                reviewer.getId(),
+                String.format("%s님의 투두 인증 검사자로 선정되었습니다.", writer.getName()),
+                String.format("투두 내용 : %s",dailyTodo.getContent()),
+                "CERTIFICATION"
+        );
+    }
+
     private Member getMember(final Long memberId) {
         return memberRepository.findById(memberId)
             .orElseThrow(() -> new MemberNotFoundException(String.format("존재하지 않는 회원 id입니다. (%d)", memberId)));
@@ -106,23 +123,6 @@ public class DailyTodoCertificationService {
         });
 
         return pickedMember;
-    }
-
-    private void sendNotificationToReviewer(
-        final Member reviewer,
-        final Member writer,
-        final DailyTodo dailyTodo
-    ) {
-        if (reviewer == null) {
-            return;
-        }
-
-        notificationService.sendNotification(
-            reviewer.getId(),
-            String.format("%s님의 투두 인증 검사자로 선정되었습니다.", writer.getName()),
-            String.format("투두 내용 : %s",dailyTodo.getContent()),
-            "CERTIFICATION"
-        );
     }
 
     @Transactional
