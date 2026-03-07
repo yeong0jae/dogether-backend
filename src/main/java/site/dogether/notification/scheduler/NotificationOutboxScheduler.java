@@ -3,6 +3,7 @@ package site.dogether.notification.scheduler;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import site.dogether.notification.entity.NotificationOutbox;
@@ -18,6 +19,7 @@ public class NotificationOutboxScheduler {
     private final NotificationService notificationService;
 
     @Scheduled(fixedRate = 5000)
+    @SchedulerLock(name = "publishPendingNotifications", lockAtMostFor = "PT25S", lockAtLeastFor = "PT4S")
     public void publishPendingNotifications() {
         final List<NotificationOutbox> pendingNotifications = notificationOutboxService.findPendingNotifications();
 
