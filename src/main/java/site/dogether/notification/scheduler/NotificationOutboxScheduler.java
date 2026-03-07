@@ -19,7 +19,7 @@ public class NotificationOutboxScheduler {
 
     @Scheduled(fixedRate = 5000)
     public void publishPendingNotifications() {
-        final List<NotificationOutbox> pendingNotifications = notificationOutboxService.findPendingNotifications();
+        final List<NotificationOutbox> pendingNotifications = notificationOutboxService.findAndMarkAsProcessing();
 
         for (final NotificationOutbox outbox : pendingNotifications) {
             try {

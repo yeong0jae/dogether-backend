@@ -47,6 +47,10 @@ public class NotificationOutbox extends BaseEntity {
         this.status = NotificationOutboxStatus.PENDING;
     }
 
+    public void markAsProcessing() {
+        this.status = NotificationOutboxStatus.PROCESSING;
+    }
+
     public void markAsSent() {
         this.status = NotificationOutboxStatus.SENT;
     }

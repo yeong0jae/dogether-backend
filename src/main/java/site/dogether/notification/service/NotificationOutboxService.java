@@ -20,9 +20,11 @@ public class NotificationOutboxService {
         notificationOutboxRepository.save(outbox);
     }
 
-    @Transactional(readOnly = true)
-    public List<NotificationOutbox> findPendingNotifications() {
-        return notificationOutboxRepository.findAllByStatus(NotificationOutboxStatus.PENDING);
+    @Transactional
+    public List<NotificationOutbox> findAndMarkAsProcessing() {
+        final List<NotificationOutbox> pendingNotifications = notificationOutboxRepository.findAllByStatus(NotificationOutboxStatus.PENDING);
+        pendingNotifications.forEach(NotificationOutbox::markAsProcessing);
+        return pendingNotifications;
     }
 
     @Transactional
