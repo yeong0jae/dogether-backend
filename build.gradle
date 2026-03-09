@@ -68,6 +68,9 @@ dependencies {
     // Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
+    // Redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:3.37.0'
+
     // P6Spy
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.12.0'
 

@@ -5,6 +5,11 @@ spring:
     username: root
     password: root
 
+  data:
+    redis:
+      host: localhost
+      port: 36379
+
   jpa:
     hibernate.ddl-auto: create
 
