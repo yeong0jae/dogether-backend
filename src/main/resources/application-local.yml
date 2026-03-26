@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:33306/dogether
+    url: jdbc:mysql://localhost:33061/dogether
     username: root
     password: root
 
@@ -11,7 +11,7 @@ spring:
       port: 6379
 
   jpa:
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: update
 
 logging:
   config: classpath:logback/logback-local.xml

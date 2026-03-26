@@ -1,0 +1,120 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: dogether-mysql
+    ports:
+      - "33061:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dogether
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./volumes/mysql/data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: dogether-redis
+    ports:
+      - "6379:6379"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/redis/data:/data
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: dogether-alloy
+    ports:
+      - "12345:12345"
+      - "4318:4318"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./volumes/springboot/logs:/var/log/springboot:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=generally-available
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: dogether-loki
+    ports:
+      - "3100:3100"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - ./volumes/loki/data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: dogether-prometheus
+    ports:
+      - "9090:9090"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./volumes/prometheus/data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.wal-compression
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    container_name: dogether-tempo
+    ports:
+      - "3200:3200"
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - ./volumes/tempo/data:/var/tempo
+    command: -config.file=/etc/tempo/tempo.yaml
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: dogether-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      TZ: Asia/Seoul
+    volumes:
+      - ./volumes/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./volumes/grafana/data:/var/lib/grafana
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: dogether-node-exporter
+    ports:
+      - "9100:9100"
+    environment:
+      TZ: Asia/Seoul
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
