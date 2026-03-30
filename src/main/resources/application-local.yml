@@ -6,7 +6,7 @@ spring:
     password: root
 
   jpa:
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: update
 
 logging:
   config: classpath:logback/logback-local.xml
