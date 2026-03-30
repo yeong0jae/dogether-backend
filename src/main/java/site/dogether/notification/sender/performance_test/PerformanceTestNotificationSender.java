@@ -16,7 +16,7 @@ public class PerformanceTestNotificationSender implements NotificationSender {
     @Override
     public void send(final NotificationRequest request) {
         try {
-            Thread.sleep(520); // 실제 알림 전송처럼 대기
+            Thread.sleep(150); // 실제 알림 전송처럼 대기
             log.info("performance test 푸시 알림 전송");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // 중단 플래그 복구

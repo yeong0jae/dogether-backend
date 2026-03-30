@@ -25,7 +25,6 @@ import site.dogether.member.repository.MemberRepository;
 import site.dogether.memberactivity.entity.DailyTodoStats;
 import site.dogether.memberactivity.exception.DailyTodoStatsNotFoundException;
 import site.dogether.memberactivity.repository.DailyTodoStatsRepository;
-import site.dogether.notification.service.NotificationOutboxService;
 import site.dogether.notification.service.NotificationService;
 
 import java.util.List;
@@ -44,7 +43,6 @@ public class DailyTodoCertificationService {
     private final DailyTodoCertificationReviewerRepository dailyTodoCertificationReviewerRepository;
     private final ReviewerPicker reviewerPicker;
     private final DailyTodoHistoryService dailyTodoHistoryService;
-    private final NotificationOutboxService notificationOutboxService;
     private final NotificationService notificationService;
     private final ChallengeGroupPolicy challengeGroupPolicy;
 
@@ -67,7 +65,7 @@ public class DailyTodoCertificationService {
         final Optional<Member> reviewer = pickDailyTodoCertificationReviewer(challengeGroup, writer, dailyTodoCertification);
         dailyTodoHistoryService.updateDailyTodoHistory(dailyTodo);
 
-        reviewer.ifPresent(target -> notificationOutboxService.save(
+        reviewer.ifPresent(target -> notificationService.sendNotification(
                 target.getId(),
                 String.format("%s님의 투두 인증 검사자로 선정되었습니다.", writer.getName()),
                 String.format("투두 내용 : %s", dailyTodo.getContent()),
