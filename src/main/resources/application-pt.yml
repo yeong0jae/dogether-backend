@@ -1,16 +1,21 @@
-server.port: ${APPLICATION_PORT}
+server.port: 8080
+
+secret:
+  jwt:
+    secret-key: pt-test-secret-key-must-be-at-least-32-bytes
+    expire-time: 86400000
 
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://localhost:33306/dogether
+    username: root
+    password: root
 
-  jpa.hibernate.ddl-auto: update
+  jpa.hibernate.ddl-auto: create
 
 logging:
-  config: classpath:logback/logback-pt.xml
+  config: classpath:logback/logback-local.xml
   level:
     root: info
     site.dogether: trace
